@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSave HOTOS - الإصدار النهائي والمحسّن</title>
+    <style>
+        /* General body styling */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-image 0.5s ease-in-out, background-color 0.5s ease;
+            background-size: cover;
+            background-position: center;
+            background-color: #0d1a26; /* Dark blue/black background */
+            direction: rtl; /* For RTL support */
+        }
+        
+        .rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* Splash Screen CSS */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 1s ease-out;
+            opacity: 1;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 15rem;
+            font-weight: bold;
+            color: #00008b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Password Modal CSS */
+        #password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        #password-box {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #password-box h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        #password-input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            width: 250px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .password-error {
+            color: #d9534f;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+
+        /* Main UI and App Icons CSS */
+        #main-ui {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #main-ui::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 0;
+        }
+        
+        body.sleep-mode {
+            background-color: #000;
+        }
+
+        body.sleep-mode #main-ui::before {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        body.sleep-mode .app-icon,
+        body.sleep-mode #clock,
+        body.sleep-mode #search-box {
+            display: none;
+        }
+        
+        body.sleep-mode #notification-bar {
+            display: flex;
+        }
+        
+        #clock {
+            position: absolute;
+            top: 30px;
+            right: 50%;
+            transform: translateX(50%);
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .app-icons-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-gap: 20px;
+            padding: 100px 20px 20px;
+            width: calc(100% - 40px);
+            justify-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+            background-color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .app-icon-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.8rem;
+            color: white;
+            text-shadow: 0 0 5px black;
+            width: 100px;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .app-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .app-icon.hidden {
+            display: none;
+        }
+        
+        .folder-icon {
+            background-color: #808080; /* Gray for folder icon */
+            position: relative;
+            border-radius: 15px; /* Square with rounded corners */
+        }
+        
+        .folder-icon .app-icon-label {
+            bottom: -25px;
+        }
+
+        .folder-icon .folder-content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 5px;
+            padding: 5px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+        }
+        
+        .folder-icon .folder-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        #add-app-icon, #emergency-app-icon, #background-apps-icon, #settings-app-icon, #emo-shortcut-icon, #hot-not-icon, #for-memory-icon, #background-process-killer-icon, #sleep-mode-icon {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            font-size: 3rem;
+            color: white;
+            z-index: 10;
+            top: 15px;
+        }
+        
+        #add-app-icon {
+            left: 15px;
+            background-color: #4CAF50;
+            box-shadow: 0 4px 6px rgba(76, 175, 80, 0.4);
+        }
+        
+        #emergency-app-icon {
+            left: 100px;
+            background-color: #f44336;
+            box-shadow: 0 4px 6px rgba(244, 67, 54, 0.4);
+        }
+        
+        #emo-shortcut-icon {
+            left: 185px;
+            background-color: #8A2BE2; /* Blue-violet */
+            box-shadow: 0 4px 6px rgba(138, 43, 226, 0.4);
+            font-size: 2.5rem;
+            line-height: 70px;
+            text-align: center;
+        }
+
+        #background-apps-icon {
+            right: 15px;
+            background-color: #007bff;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.4);
+            font-size: 2rem;
+            line-height: 70px;
+            text-align: center;
+        }
+
+        #settings-app-icon {
+            right: 100px;
+            background-color: #808080;
+            box-shadow: 0 4px 6px rgba(128, 128, 128, 0.4);
+            font-size: 2.5rem;
+            line-height: 70px;
+            text-align: center;
+        }
+        
+        #background-process-killer-icon {
+            right: 185px;
+            background-color: #006400; /* Dark green for for memory app */
+            box-shadow: 0 4px 6px rgba(0, 100, 0, 0.4);
+            font-size: 2.5rem;
+            line-height: 70px;
+            text-align: center;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        #sleep-mode-icon {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+        }
+        
+        #search-box {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            background-color: #ffffffd0;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+
+        /* Notification Bar CSS */
+        #notification-bar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 50px; /* Initial width */
+            height: 50px;
+            background-color: rgba(44, 62, 80, 0.7); /* Dark blue/gray, semi-transparent */
+            backdrop-filter: blur(5px);
+            border-radius: 25px; /* Makes it a circle initially */
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            overflow: hidden;
+            transition: width 0.5s ease-in-out, background-color 0.3s ease;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #notification-bar.expanded {
+            width: 300px; /* Expanded width */
+            border-radius: 10px;
+        }
+
+        #notification-icon {
+            font-size: 1.5rem;
+            color: #ecf0f1;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        #notification-icon.animate {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-10deg); }
+        }
+
+        #notification-content {
+            color: #ecf0f1;
+            margin-left: 10px;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+
+        /* Modal for all pop-up windows */
+        .modal {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+            background-color: #fefefed0;
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 900px;
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            resize: both;
+            overflow: hidden;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .modal-content {
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            cursor: move;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            background: #eee;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            flex-grow: 1;
+        }
+        
+        .modal-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px; /* Spacing for RTL */
+        }
+        
+        .modal-close:hover,
+        .modal-close:focus {
+            color: black;
+            text-decoration: none;
+        }
+
+        .modal-content.small {
+            width: 400px;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            text-align: center;
+        }
+        
+        .modal-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .modal-button:hover {
+            background-color: #0056b3;
+        }
+        
+        .settings-select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 95%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+        }
+        
+        .app-content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .app-content-area iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        #background-apps-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        #background-apps-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #eee;
+            margin-bottom: 5px;
+            border-radius: 8px;
+        }
+
+        /* Emo Assistant styles */
+        #emo-chat-area {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .chat-message {
+            max-width: 80%;
+            padding: 10px;
+            border-radius: 15px;
+        }
+        
+        .user-message {
+            align-self: flex-start;
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .emo-message {
+            align-self: flex-end;
+            background-color: #eee;
+            color: #333;
+        }
+
+        #emo-input-container {
+            display: flex;
+            padding: 10px;
+        }
+
+        #emo-input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+        }
+
+        /* Browser App styles */
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .browser-toolbar {
+            display: flex;
+            padding: 5px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .browser-toolbar input {
+            flex-grow: 1;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .browser-toolbar button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #browser-frame {
+            flex-grow: 1;
+            width: 100%;
+            border: none;
+        }
+        
+        .file-item, .folder-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .file-item-icon {
+            font-size: 2rem;
+            margin-left: 15px;
+        }
+        
+        .file-item-name {
+            font-size: 1.1rem;
+            flex-grow: 1;
+        }
+
+        /* Hot Not App styles */
+        #hot-not-modal #hot-not-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 10px;
+        }
+        
+        #hot-not-notes {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            overflow-y: auto;
+            text-align: right;
+            direction: rtl;
+        }
+        
+        #hot-not-toolbar {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #hot-not-canvas-container {
+            display: none;
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        
+        #drawing-canvas {
+            background-color: #fff;
+        }
+        
+        #hot-not-save-button {
+            background-color: #f44336;
+        }
+        
+        .hot-not-note {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            position: relative;
+        }
+        
+        .hot-not-note .delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #d9534f;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* For Memory App */
+        #for-memory-modal {
+            background-color: rgba(0, 100, 0, 0.8);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        #for-memory-modal .modal-header {
+            background-color: transparent;
+            color: white;
+        }
+        
+        #for-memory-modal .modal-header .modal-close {
+            color: white;
+        }
+        
+        #for-memory-modal h2 {
+            color: white;
+        }
+
+        #for-memory-icon {
+            background-color: #006400; /* Dark green */
+            box-shadow: 0 4px 6px rgba(0, 100, 0, 0.4);
+            font-size: 3rem;
+            line-height: 70px;
+            text-align: center;
+        }
+        
+        #background-process-killer-icon {
+            background-color: #333;
+            color: #fff;
+            font-size: 2.5rem;
+            line-height: 70px;
+            text-align: center;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        #background-process-killer-icon::before {
+            content: "|||";
+        }
+        
+        #sleep-mode-icon::before {
+            content: "~";
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <div class="logo">\|</div>
+    </div>
+
+    <div id="password-modal">
+        <div id="password-box">
+            <h2 data-i18n="password-title">أدخل كلمة المرور</h2>
+            <input type="password" id="password-input" placeholder="أدخل كلمة المرور" class="rtl">
+            <p id="password-error" class="password-error" style="display: none;" data-i18n="password-error">كلمة المرور خاطئة!</p>
+            <button class="modal-button" onclick="checkPassword()" data-i18n="password-button">دخول</button>
+        </div>
+    </div>
+
+    <div id="main-ui">
+        <input type="text" id="search-box" placeholder="بحث عن تطبيق..." data-i18n="search-placeholder" class="rtl">
+        <div id="add-app-icon" class="app-icon" onclick="openCreator()">+</div>
+        <div id="emergency-app-icon" class="app-icon" onclick="toggleEmergencyMode()">!</div>
+        <div id="emo-shortcut-icon" class="app-icon" onclick="activateEmoShortcut()">'</div>
+        <div id="background-apps-icon" class="app-icon" onclick="openBackgroundAppsList()">#</div>
+        <div id="settings-app-icon" class="app-icon" onclick="openSettingsApp()">*</div>
+        
+        <div id="background-process-killer-icon" class="app-icon" onclick="openBackgroundProcessKiller()"></div>
+        <div id="sleep-mode-icon" class="app-icon" onclick="toggleSleepMode()"></div>
+        
+        <div id="clock"></div>
+
+        <div id="app-icons-container" class="app-icons-container">
+            </div>
+
+        <div id="creator-modal" class="modal small">
+            <div class="modal-header">
+                <h2 data-i18n="create-app-title">إنشاء تطبيق</h2>
+                <span class="modal-close" onclick="closeCreator()">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <div id="creator-type-selection">
+                    <h2 data-i18n="app-type-title">اختر نوع التطبيق</h2>
+                    <button class="modal-button" onclick="showNormalAppCreator()" data-i18n="normal-app-button">تطبيق منشأ عادي</button>
+                    <button class="modal-button" onclick="showSystemAppCreator()" data-i18n="system-app-button">تطبيق نظامي</button>
+                    <button class="modal-button" onclick="showCreateAppFolderModal()" data-i18n="app-folder-button">مجلد تطبيقات</button>
+                    <button class="modal-button" onclick="showCreateFileManagerFolderModal()" data-i18n="file-folder-button">مجلد ملفات</button>
+                </div>
+
+                <div id="normal-app-creator" style="display:none;">
+                    <h2 data-i18n="normal-app-creator-title">إنشاء تطبيق عادي</h2>
+                    <div class="input-group">
+                        <label for="appName" data-i18n="app-name-label">اسم التطبيق:</label>
+                        <input type="text" id="appName" placeholder="أدخل اسم التطبيق" data-i18n="app-name-placeholder" class="rtl">
+                    </div>
+                    <div class="input-group">
+                        <label for="appIconFile" data-i18n="icon-file-label">صورة الأيقونة من الجهاز:</label>
+                        <input type="file" id="appIconFile" accept="image/*">
+                    </div>
+                    <div class="input-group">
+                        <label for="appCodeFile" data-i18n="code-file-label">ملف المشروع (HTML, JS, TXT):</label>
+                        <input type="file" id="appCodeFile" accept=".html,.js,.txt">
+                    </div>
+                    <button class="modal-button" onclick="createApp()" data-i18n="create-app-button">إنشاء التطبيق</button>
+                </div>
+
+                <div id="system-app-creator" style="display:none;">
+                    <h2 data-i18n="system-app-creator-title">إنشاء تطبيق نظامي</h2>
+                    <p data-i18n="system-app-desc">هنا يمكنك إضافة كود خاص بالنظام.</p>
+                    <div class="input-group">
+                        <label for="systemAppCode" data-i18n="system-code-label">كود النظام:</label>
+                        <textarea id="systemAppCode" rows="10" placeholder="أدخل الكود البرمجي هنا..." data-i18n="system-code-placeholder" class="rtl"></textarea>
+                    </div>
+                    <button class="modal-button" onclick="createSystemApp()" data-i18n="create-system-app-button">إنشاء التطبيق النظامي</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="background-apps-modal" class="modal small">
+            <div class="modal-header">
+                <h2 data-i18n="background-apps-title">التطبيقات قيد التشغيل في الخلفية</h2>
+                <span class="modal-close" onclick="closeApp('background-apps-modal')">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <ul id="background-apps-list">
+                    </ul>
+                <button class="modal-button" onclick="stopAllApps()" data-i18n="stop-all-button">إيقاف كل التطبيقات</button>
+            </div>
+        </div>
+        
+        <div id="for-memory-modal" class="modal">
+            <div class="modal-header">
+                <h2>For Memory</h2>
+                <span class="modal-close" onclick="closeApp('for-memory-modal')">&times;</span>
+            </div>
+            <div class="modal-content" style="justify-content: center; align-items: center; text-align: center;">
+                <p>تنظيف الذاكرة وإيقاف التطبيقات في الخلفية...</p>
+            </div>
+        </div>
+        
+        <div id="background-process-killer-modal" class="modal small">
+            <div class="modal-header">
+                <h2 data-i18n="background-process-killer-title">إيقاف تطبيقات في الخلفية</h2>
+                <span class="modal-close" onclick="closeApp('background-process-killer-modal')">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <ul id="background-process-list">
+                    </ul>
+            </div>
+        </div>
+
+        <div id="settings-app-modal" class="modal small">
+            <div class="modal-header">
+                <h2 data-i18n="settings-title">تطبيق الإعدادات</h2>
+                <span class="modal-close" onclick="closeApp('settings-app-modal')">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <div style="margin-top: 20px;">
+                    <h3 data-i18n="wallpaper-title">تغيير خلفية الشاشة</h3>
+                    <input type="file" id="wallpaperFile" accept="image/*" onchange="changeWallpaper(this)">
+                </div>
+                <div style="margin-top: 20px;">
+                    <h3 data-i18n="password-settings-title">تعيين كلمة مرور للنظام</h3>
+                    <input type="password" id="newPassword" placeholder="أدخل كلمة مرور جديدة" style="width: 80%;" data-i18n="new-password-placeholder" class="rtl">
+                    <button class="modal-button" onclick="setPassword()" data-i18n="set-password-button">تعيين</button>
+                </div>
+                <div style="margin-top: 20px;">
+                    <h3 data-i18n="language-title">تغيير اللغة</h3>
+                    <select id="language-select" class="settings-select" onchange="changeLanguage(this.value)">
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                    </select>
+                </div>
+                 <div style="margin-top: 20px;">
+                    <h3 data-i18n="alarm-title">ضبط منبه</h3>
+                    <input type="time" id="alarm-time">
+                    <button class="modal-button" onclick="setAlarm()">ضبط المنبه</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="emo-assistant-modal" class="modal">
+            <div class="modal-header">
+                <h2 data-i18n="emo-title">Emo Assistant</h2>
+                <span class="modal-close" onclick="closeApp('emo-assistant-modal')">&times;</span>
+            </div>
+            <div class="modal-content rtl">
+                <div id="emo-chat-area" class="rtl">
+                    <div class="chat-message emo-message" data-i18n="emo-welcome-message">مرحباً! أنا Emo، مساعدك الشخصي. كيف يمكنني المساعدة اليوم؟</div>
+                </div>
+                <div id="emo-input-container">
+                    <input type="text" id="emo-input" placeholder="اكتب رسالتك هنا..." data-i18n="emo-input-placeholder" class="rtl">
+                    <button class="modal-button" onclick="sendEmoMessage()" data-i18n="emo-send-button">إرسال</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="browser-modal" class="modal">
+            <div class="modal-header">
+                <h2 data-i18n="browser-title">Browser</h2>
+                <span class="modal-close" onclick="closeApp('browser-modal')">&times;</span>
+            </div>
+            <div class="modal-content">
+                <div class="browser-container">
+                    <div class="browser-toolbar">
+                        <input type="text" id="browser-url-input" placeholder="أدخل رابط URL..." data-i18n="browser-url-placeholder">
+                        <button onclick="navigateBrowser()" data-i18n="browser-go-button">انتقال</button>
+                    </div>
+                    <iframe id="browser-frame" src="about:blank"></iframe>
+                </div>
+            </div>
+        </div>
+        
+        <div id="dina-file-manager-modal" class="modal">
+            <div class="modal-header">
+                <h2>Dina File Manager</h2>
+                <span class="modal-close" onclick="closeApp('dina-file-manager-modal')">&times;</span>
+            </div>
+            <div class="modal-content rtl">
+                <div style="text-align: right; padding: 10px;">
+                    <button class="modal-button" onclick="document.getElementById('import-file-modal').style.display='flex'">+ استيراد ملف</button>
+                </div>
+                <div id="file-list" style="padding: 10px; border-top: 1px solid #ccc; flex-grow: 1; overflow-y: auto;">
+                    </div>
+            </div>
+        </div>
+        
+        <div id="import-file-modal" class="modal small" style="display: none;">
+            <div class="modal-header">
+                <h2>استيراد ملف جديد</h2>
+                <span class="modal-close" onclick="document.getElementById('import-file-modal').style.display='none';">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <div class="input-group">
+                    <label>اختر الملف:</label>
+                    <input type="file" id="imported-file-input">
+                </div>
+                <button class="modal-button" onclick="importFile()">استيراد وحفظ</button>
+            </div>
+        </div>
+
+        <div id="file-content-modal" class="modal">
+            <div class="modal-header">
+                <h2 id="file-content-title"></h2>
+                <span class="modal-close" onclick="closeApp('file-content-modal')">&times;</span>
+            </div>
+            <div class="modal-content rtl">
+                <div id="file-content-display" style="flex-grow: 1; overflow: auto;"></div>
+            </div>
+        </div>
+        
+        <div id="create-app-folder-modal" class="modal small" style="display: none;">
+            <div class="modal-header">
+                <h2 data-i18n="create-app-folder-modal-title">إنشاء مجلد تطبيقات</h2>
+                <span class="modal-close" onclick="document.getElementById('create-app-folder-modal').style.display='none'; closeCreator();">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <div class="input-group">
+                    <label data-i18n="app-folder-name-placeholder">اسم المجلد:</label>
+                    <input type="text" id="new-app-folder-name" placeholder="أدخل اسم المجلد" class="rtl">
+                </div>
+                <div class="input-group">
+                    <label data-i18n="select-apps-label">اختر التطبيقات التي تريد إضافتها:</label>
+                    <div id="app-selection-list">
+                        </div>
+                </div>
+                <button class="modal-button" onclick="createAppFolder()">إنشاء المجلد</button>
+            </div>
+        </div>
+        
+        <div id="create-file-folder-modal" class="modal small" style="display: none;">
+            <div class="modal-header">
+                <h2 data-i18n="create-file-folder-modal-title">إنشاء مجلد ملفات</h2>
+                <span class="modal-close" onclick="document.getElementById('create-file-folder-modal').style.display='none'; closeCreator();">&times;</span>
+            </div>
+            <div class="modal-content small rtl">
+                <div class="input-group">
+                    <label data-i18n="file-folder-name-placeholder">اسم المجلد:</label>
+                    <input type="text" id="new-file-folder-name" placeholder="أدخل اسم المجلد" class="rtl">
+                </div>
+                <div class="input-group">
+                    <label data-i18n="select-files-label">اختر الملفات التي تريد إضافتها:</label>
+                    <div id="file-selection-list">
+                        </div>
+                </div>
+                <button class="modal-button" onclick="createFileManagerFolder()">إنشاء المجلد</button>
+            </div>
+        </div>
+
+        <div id="hot-not-modal" class="modal" style="background-color: #f44336; color: white;">
+            <div class="modal-header" style="background-color: transparent; color: white;">
+                <h2>HOT NOT |□</h2>
+                <span class="modal-close" onclick="closeApp('hot-not-modal')">&times;</span>
+            </div>
+            <div class="modal-content rtl" id="hot-not-content">
+                <textarea id="hot-not-notes" placeholder="اكتب ملاحظاتك هنا..." style="direction: rtl;"></textarea>
+                <div id="hot-not-canvas-container">
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+                <div id="hot-not-toolbar">
+                    <button class="modal-button" onclick="toggleDrawingMode()">الرسم</button>
+                    <button class="modal-button" id="hot-not-save-button" onclick="saveHotNot()">حفظ</button>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div id="notification-bar" onclick="handleNotificationClick()">
+        <div id="notification-icon">🔔</div>
+        <div id="notification-content" style="display: none;"></div>
+    </div>
+
+    <script>
+        // TextAnalyzer.js
+        class TextAnalyzer {
+            constructor() {
+                this.stopwords = new Set([
+                    'ال', 'و', 'في', 'على', 'من', 'إلى', 'عن', 'ب', 'ك', 'ل',
+                    'أن', 'ما', 'هذا', 'هذه', 'هؤلاء', 'التي', 'الذي', 'الذين',
+                    'أين', 'متى', 'كيف', 'هل', 'لي', 'لتشغيل', 'افتح', 'شغل', 'إفتح'
+                ]);
+            }
+
+            cleanText(text) {
+                let words = text.toLowerCase().split(/\s+/);
+                let cleanedWords = words.filter(word => !this.stopwords.has(word));
+                return cleanedWords.join(' ');
+            }
+
+            extractKeywords(text) {
+                let cleanedText = this.cleanText(text);
+                return cleanedText.split(' ').filter(word => word.length > 2);
+            }
+
+            hasKeyword(text, keyword) {
+                let cleanedText = this.cleanText(text);
+                return cleanedText.includes(keyword.toLowerCase());
+            }
+
+            findAppName(text, appList) {
+                const cleanedText = this.cleanText(text);
+                let foundApp = null;
+                for (const app of appList) {
+                    const appNameLower = app.name.toLowerCase();
+                    if (cleanedText.includes(appNameLower)) {
+                        foundApp = app;
+                        break;
+                    }
+                }
+                return foundApp;
+            }
+        }
+        
+        // نهاية مكتبة TextAnalyzer
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const splashScreen = document.getElementById('splash-screen');
+            const mainUI = document.getElementById('main-ui');
+            const passwordModal = document.getElementById('password-modal');
+            const searchBox = document.getElementById('search-box');
+            
+            loadAppsFromLocalStorage();
+            loadWallpaper();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            setTimeout(() => {
+                splashScreen.classList.add('hidden');
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    if (localStorage.getItem('hotos-password')) {
+                        passwordModal.style.display = 'flex';
+                    } else {
+                        mainUI.style.display = 'block';
+                    }
+                }, 1000);
+            }, 3000);
+
+            searchBox.addEventListener('input', filterApps);
+            document.getElementById('password-input').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+
+            // Add event listener for Emo Assistant input
+            document.getElementById('emo-input').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    sendEmoMessage();
+                }
+            });
+
+            // Make all modals draggable
+            document.querySelectorAll('.modal').forEach(modal => {
+                let header = modal.querySelector('.modal-header');
+                if (header) {
+                    header.addEventListener('mousedown', startDrag);
+                    modal.addEventListener('mousedown', bringToFront);
+                }
+            });
+
+            // Add system icons to app icons container on load
+            renderEmoAssistantIcon();
+            renderBrowserIcon();
+            renderFileManagerIcon();
+            renderHotNotIcon();
+            
+            // Load language from local storage
+            const savedLanguage = localStorage.getItem('hotos-language') || 'ar';
+            document.getElementById('language-select').value = savedLanguage;
+            changeLanguage(savedLanguage);
+            
+            // Example of a welcome notification
+            showNotification('HOTOS', 'مرحباً بعودتك!');
+            
+            // Load and render folders
+            loadFoldersFromLocalStorage();
+            
+            // Initialize drawing canvas for Hot Not
+            initializeCanvas();
+            
+            // Check for alarms every second
+            setInterval(checkAlarms, 1000);
+
+        });
+
+        const creatorModal = document.getElementById('creator-modal');
+        const creatorSelection = document.getElementById('creator-type-selection');
+        const normalAppCreator = document.getElementById('normal-app-creator');
+        const systemAppCreator = document.getElementById('system-app-creator');
+        const settingsAppModal = document.getElementById('settings-app-modal');
+        const appIconsContainer = document.getElementById('app-icons-container');
+        const backgroundAppsModal = document.getElementById('background-apps-modal');
+        const backgroundAppsList = document.getElementById('background-apps-list');
+        const emoAssistantModal = document.getElementById('emo-assistant-modal');
+        const emoChatArea = document.getElementById('emo-chat-area');
+        const browserModal = document.getElementById('browser-modal');
+        const fileManagerModal = document.getElementById('dina-file-manager-modal');
+        const importFileModal = document.getElementById('import-file-modal');
+        const fileContentModal = document.getElementById('file-content-modal');
+        const fileListContainer = document.getElementById('file-list');
+        const createAppFolderModal = document.getElementById('create-app-folder-modal');
+        const createFileFolderModal = document.getElementById('create-file-folder-modal');
+        const hotNotModal = document.getElementById('hot-not-modal');
+        const forMemoryModal = document.getElementById('for-memory-modal');
+        const backgroundProcessKillerModal = document.getElementById('background-process-killer-modal');
+        const backgroundProcessList = document.getElementById('background-process-list');
+        
+        const textAnalyzer = new TextAnalyzer();
+        
+        // Translations
+        const translations = {
+            'ar': {
+                'password-title': 'أدخل كلمة المرور',
+                'password-error': 'كلمة المرور خاطئة!',
+                'password-button': 'دخول',
+                'search-placeholder': 'بحث عن تطبيق...',
+                'create-app-title': 'إنشاء تطبيق',
+                'app-type-title': 'اختر نوع التطبيق',
+                'normal-app-button': 'تطبيق منشأ عادي',
+                'system-app-button': 'تطبيق نظامي',
+                'normal-app-creator-title': 'إنشاء تطبيق عادي',
+                'app-name-label': 'اسم التطبيق:',
+                'app-name-placeholder': 'أدخل اسم التطبيق',
+                'icon-file-label': 'صورة الأيقونة من الجهاز:',
+                'code-file-label': 'ملف المشروع (HTML, JS, TXT):',
+                'create-app-button': 'إنشاء التطبيق',
+                'system-app-creator-title': 'إنشاء تطبيق نظامي',
+                'system-app-desc': 'هنا يمكنك إضافة كود خاص بالنظام.',
+                'system-code-label': 'كود النظام:',
+                'system-code-placeholder': 'أدخل الكود البرمجي هنا...',
+                'create-system-app-button': 'إنشاء التطبيق النظامي',
+                'background-apps-title': 'التطبيقات قيد التشغيل في الخلفية',
+                'stop-all-button': 'إيقاف كل التطبيقات',
+                'settings-title': 'تطبيق الإعدادات',
+                'wallpaper-title': 'تغيير خلفية الشاشة',
+                'password-settings-title': 'تعيين كلمة مرور للنظام',
+                'new-password-placeholder': 'أدخل كلمة مرور جديدة',
+                'set-password-button': 'تعيين',
+                'language-title': 'تغيير اللغة',
+                'emo-title': 'Emo Assistant',
+                'emo-welcome-message': 'مرحباً! أنا Emo، مساعدك الشخصي. كيف يمكنني المساعدة اليوم؟',
+                'emo-input-placeholder': 'اكتب رسالتك هنا...',
+                'emo-send-button': 'إرسال',
+                'browser-title': 'Browser',
+                'browser-url-placeholder': 'أدخل رابط URL...',
+                'browser-go-button': 'انتقال',
+                'unsupported-app-delete': 'لا يمكن حذف هذا التطبيق من النظام.',
+                'app-delete-confirm': 'هل أنت متأكد من حذف تطبيق "{appName}"؟',
+                'app-deleted': 'تم حذف التطبيق بنجاح!',
+                'app-created-success': 'تم إنشاء تطبيق "{appName}" بنجاح!',
+                'fill-all-fields': 'الرجاء تعبئة كل الحقول!',
+                'error-creating-app': 'حدث خطأ أثناء إنشاء التطبيق. تأكد من أن الملفات صالحة.',
+                'code-copied': 'تم نسخ الكود البرمجي بنجاح!',
+                'copy-failed': 'فشل نسخ الكود.',
+                'emergency-on': 'تطبيق الطوارئ: كل التطبيقات مخفية الآن!',
+                'emergency-off': 'تطبيق الطوارئ: تم إلغاء الوضع، التطبيقات ظاهرة الآن!',
+                'app-open-success': 'تمام، سأقوم بفتح تطبيق "{appName}".',
+                'emo-not-understand': 'لا أفهم هذا الأمر. يمكنك تجربة \'ادخل للتطبيق [اسم التطبيق]\' أو كتابة اسم التطبيق مباشرة.',
+                'emo-welcome-back': 'أهلاً، كيف يمكنني المساعدة؟',
+                'password-set-success': 'تم تعيين كلمة المرور بنجاح!',
+                'password-set-error': 'الرجاء إدخال كلمة مرور صالحة!',
+                'wallpaper-changed-success': 'تم تغيير الخلفية بنجاح!',
+                'file-manager-title': 'Dina File Manager',
+                'file-manager-icon': '■□',
+                'create-file-title': 'إنشاء ملف جديد',
+                'create-file-placeholder': 'مثال: my-code.txt',
+                'save-file-button': 'حفظ الملف',
+                'file-saved-success': 'تم حفظ الملف بنجاح!',
+                'file-name-required': 'يجب إدخال اسم للملف!',
+                'file-content-required': 'يجب أن يحتوي الملف على محتوى!',
+                'app-folder-button': 'مجلد تطبيقات',
+                'file-folder-button': 'مجلد ملفات',
+                'file-folder-created': 'تم إنشاء مجلد ملفات في Dina File Manager!',
+                'app-folder-created': 'تم إنشاء مجلد تطبيقات بنجاح!',
+                'app-folder-icon': '><',
+                'app-folder-name-placeholder': 'أدخل اسم المجلد',
+                'create-app-folder-modal-title': 'إنشاء مجلد تطبيقات',
+                'create-file-folder-modal-title': 'إنشاء مجلد ملفات',
+                'select-apps-label': 'اختر التطبيقات التي تريد إضافتها:',
+                'select-files-label': 'اختر الملفات التي تريد إضافتها:',
+                'hot-not-title': 'HOT NOT',
+                'hot-not-icon': '|□',
+                'for-memory-title': 'For Memory',
+                'for-memory-clean-success': 'تم تنظيف الذاكرة وإيقاف كل التطبيقات في الخلفية!',
+                'background-process-killer-title': 'إيقاف تطبيقات في الخلفية',
+                'file-imported-success': 'تم استيراد الملف بنجاح!',
+                'file-import-error': 'حدث خطأ أثناء استيراد الملف.',
+                'alarm-title': 'ضبط منبه',
+                'alarm-set-success': 'تم ضبط المنبه بنجاح!',
+                'alarm-ring': 'المنبه يرن!',
+                'sleep-mode-on': 'تم تفعيل وضع السكون. اضغط على شريط الإشعارات للعودة.',
+                'sleep-mode-off': 'تم إلغاء وضع السكون.',
+                'stop-button': 'إيقاف'
+            },
+            'en': {
+                'password-title': 'Enter Password',
+                'password-error': 'Incorrect password!',
+                'password-button': 'Enter',
+                'search-placeholder': 'Search for an app...',
+                'create-app-title': 'Create App',
+                'app-type-title': 'Choose App Type',
+                'normal-app-button': 'Normal App',
+                'system-app-button': 'System App',
+                'normal-app-creator-title': 'Create Normal App',
+                'app-name-label': 'App Name:',
+                'app-name-placeholder': 'Enter app name',
+                'icon-file-label': 'Icon File:',
+                'code-file-label': 'Project File (HTML, JS, TXT):',
+                'create-app-button': 'Create App',
+                'system-app-creator-title': 'Create System App',
+                'system-app-desc': 'Here you can add system-specific code.',
+                'system-code-label': 'System Code:',
+                'system-code-placeholder': 'Enter code here...',
+                'create-system-app-button': 'Create System App',
+                'background-apps-title': 'Background Apps',
+                'stop-all-button': 'Stop All Apps',
+                'settings-title': 'Settings App',
+                'wallpaper-title': 'Change Wallpaper',
+                'password-settings-title': 'Set System Password',
+                'new-password-placeholder': 'Enter new password',
+                'set-password-button': 'Set',
+                'language-title': 'Change Language',
+                'emo-title': 'Emo Assistant',
+                'emo-welcome-message': 'Hello! I am Emo, your personal assistant. How can I help today?',
+                'emo-input-placeholder': 'Write your message here...',
+                'emo-send-button': 'Send',
+                'browser-title': 'Browser',
+                'browser-url-placeholder': 'Enter URL...',
+                'browser-go-button': 'Go',
+                'unsupported-app-delete': 'This app cannot be deleted from the system.',
+                'app-delete-confirm': 'Are you sure you want to delete app "{appName}"?',
+                'app-deleted': 'App deleted successfully!',
+                'app-created-success': 'App "{appName}" created successfully!',
+                'fill-all-fields': 'Please fill in all fields!',
+                'error-creating-app': 'An error occurred while creating the app. Make sure the files are valid.',
+                'code-copied': 'Code copied successfully!',
+                'copy-failed': 'Failed to copy code.',
+                'emergency-on': 'Emergency App: All apps are now hidden!',
+                'emergency-off': 'Emergency App: Mode canceled, apps are now visible!',
+                'app-open-success': 'Okay, I will open the app "{appName}".',
+                'emo-not-understand': 'I do not understand this command. You can try \'open app [app name]\' or just type the app name.',
+                'emo-welcome-back': 'Hello, how can I help?',
+                'password-set-success': 'Password set successfully!',
+                'password-set-error': 'Please enter a valid password!',
+                'wallpaper-changed-success': 'Wallpaper changed successfully!',
+                'file-manager-title': 'Dina File Manager',
+                'file-manager-icon': '■□',
+                'create-file-title': 'Create New File',
+                'create-file-placeholder': 'e.g., my-code.txt',
+                'save-file-button': 'Save File',
+                'file-saved-success': 'File saved successfully!',
+                'file-name-required': 'File name is required!',
+                'file-content-required': 'File must have content!',
+                'app-folder-button': 'App Folder',
+                'file-folder-button': 'File Folder',
+                'file-folder-created': 'File folder created in Dina File Manager!',
+                'app-folder-created': 'App folder created successfully!',
+                'app-folder-icon': '><',
+                'app-folder-name-placeholder': 'Enter folder name',
+                'create-app-folder-modal-title': 'Create App Folder',
+                'create-file-folder-modal-title': 'Create File Folder',
+                'select-apps-label': 'Select apps to add:',
+                'select-files-label': 'Select files to add:',
+                'hot-not-title': 'HOT NOT',
+                'hot-not-icon': '|□',
+                'for-memory-title': 'For Memory',
+                'for-memory-clean-success': 'Memory cleaned and all background apps stopped!',
+                'background-process-killer-title': 'Stop Background Apps',
+                'file-imported-success': 'File imported successfully!',
+                'file-import-error': 'An error occurred while importing the file.',
+                'alarm-title': 'Set Alarm',
+                'alarm-set-success': 'Alarm set successfully!',
+                'alarm-ring': 'Alarm ringing!',
+                'sleep-mode-on': 'Sleep mode is on. Click the notification bar to return.',
+                'sleep-mode-off': 'Sleep mode is off.',
+                'stop-button': 'Stop'
+            },
+            'fr': {
+                'password-title': 'Entrer le mot de passe',
+                'password-error': 'Mot de passe incorrect!',
+                'password-button': 'Entrer',
+                'search-placeholder': 'Rechercher une application...',
+                'create-app-title': 'Créer une application',
+                'app-type-title': "Choisir le type d'application",
+                'normal-app-button': 'Application Normale',
+                'system-app-button': 'Application Système',
+                'normal-app-creator-title': 'Créer une application normale',
+                'app-name-label': "Nom de l'application:",
+                'app-name-placeholder': "Entrer le nom de l'application",
+                'icon-file-label': "Fichier d'icône:",
+                'code-file-label': 'Fichier de projet (HTML, JS, TXT):',
+                'create-app-button': 'Créer l\'application',
+                'system-app-creator-title': 'Créer une application système',
+                'system-app-desc': 'Ici, vous pouvez ajouter du code spécifique au système.',
+                'system-code-label': 'Code du système:',
+                'system-code-placeholder': 'Entrer le code ici...',
+                'create-system-app-button': 'Créer l\'application système',
+                'background-apps-title': 'Applications en arrière-plan',
+                'stop-all-button': 'Arrêter toutes les applications',
+                'settings-title': 'Application de paramètres',
+                'wallpaper-title': "Changer le fond d'écran",
+                'password-settings-title': 'Définir le mot de passe du système',
+                'new-password-placeholder': 'Entrer un nouveau mot de passe',
+                'set-password-button': 'Définir',
+                'language-title': 'Changer la langue',
+                'emo-title': 'Emo Assistant',
+                'emo-welcome-message': 'Bonjour! Je suis Emo, votre assistant personnel. Comment puis-je vous aider aujourd\'hui?',
+                'emo-input-placeholder': 'Écrivez votre message ici...',
+                'emo-send-button': 'Envoyer',
+                'browser-title': 'Navigateur',
+                'browser-url-placeholder': 'Entrer une URL...',
+                'browser-go-button': 'Aller',
+                'unsupported-app-delete': 'Cette application ne peut pas être supprimée du système.',
+                'app-delete-confirm': 'Êtes-vous sûr de vouloir supprimer l\'application "{appName}"?',
+                'app-deleted': 'Application supprimée avec succès!',
+                'app-created-success': 'Application "{appName}" créée avec succès!',
+                'fill-all-fields': 'Veuillez remplir tous les champs!',
+                'error-creating-app': 'Une erreur est survenue lors de la création de l\'application. Assurez-vous que les fichiers sont valides.',
+                'code-copied': 'Code copié avec succès!',
+                'copy-failed': 'Échec de la copie du code.',
+                'emergency-on': 'Application d\'urgence: Toutes les applications sont maintenant masquées!',
+                'emergency-off': 'Application d\'urgence: Mode annulé, les applications sont maintenant visibles!',
+                'app-open-success': 'D\'accord, je vais ouvrir l\'application "{appName}".',
+                'emo-not-understand': 'Je ne comprends pas cette commande. Vous pouvez essayer "ouvrir l\'application [nom de l\'application]" ou simplement taper le nom de l\'application.',
+                'emo-welcome-back': 'Bonjour, comment puis-je aider?',
+                'password-set-success': 'Mot de passe défini avec succès!',
+                'password-set-error': 'Veuillez entrer un mot de passe valide!',
+                'wallpaper-changed-success': 'Fond d\'écran changé avec succès!',
+                'file-manager-title': 'Dina File Manager',
+                'file-manager-icon': '■□',
+                'create-file-title': 'Créer un nouveau fichier',
+                'create-file-placeholder': 'ex: my-code.txt',
+                'save-file-button': 'Enregistrer le fichier',
+                'file-saved-success': 'Fichier enregistré avec succès!',
+                'file-name-required': 'Le nom du fichier est requis!',
+                'file-content-required': 'Le fichier doit avoir du contenu!',
+                'app-folder-button': 'Dossier d\'applications',
+                'file-folder-button': 'Dossier de fichiers',
+                'file-folder-created': 'Dossier de fichiers créé dans Dina File Manager!',
+                'app-folder-created': 'Dossier d\'applications créé avec succès!',
+                'app-folder-icon': '><',
+                'app-folder-name-placeholder': 'Entrer le nom du dossier',
+                'create-app-folder-modal-title': 'Créer un dossier d\'applications',
+                'create-file-folder-modal-title': 'Créer un dossier de fichiers',
+                'select-apps-label': 'Sélectionnez les applications à ajouter:',
+                'select-files-label': 'Sélectionnez les fichiers à ajouter:',
+                'hot-not-title': 'HOT NOT',
+                'hot-not-icon': '|□',
+                'for-memory-title': 'For Memory',
+                'for-memory-clean-success': 'Mémoire nettoyée et toutes les applications en arrière-plan arrêtées!',
+                'background-process-killer-title': 'Arrêter les applications en arrière-plan',
+                'file-imported-success': 'Fichier importé avec succès!',
+                'file-import-error': 'Une erreur est survenue lors de l\'importation du fichier.',
+                'alarm-title': 'Définir une alarme',
+                'alarm-set-success': 'Alarme définie avec succès!',
+                'alarm-ring': 'Alarme sonne!',
+                'sleep-mode-on': 'Le mode veille est activé. Cliquez sur la barre de notification pour revenir.',
+                'sleep-mode-off': 'Le mode veille est désactivé.',
+                'stop-button': 'Arrêter'
+            }
+        };
+
+        let emergencyModeActive = false;
+        let activeApps = {};
+        let longPressTimeout = null;
+        let sleepModeActive = false;
+        let alarmInterval = null;
+
+        // Window drag variables
+        let activeModal = null;
+        let isDragging = false;
+        let offsetX, offsetY;
+        let zIndexCounter = 1000;
+
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            const date = now.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('clock').innerText = `${time} | ${date}`;
+        }
+
+        function showNotification(title, message, isAlarm = false) {
+            const notificationBar = document.getElementById('notification-bar');
+            const notificationIcon = document.getElementById('notification-icon');
+            const notificationContent = document.getElementById('notification-content');
+            
+            // Set content and expand the bar
+            notificationContent.innerText = `${title}: ${message}`;
+            notificationContent.style.display = 'block';
+            notificationBar.classList.add('expanded');
+            notificationIcon.classList.add('animate');
+            
+            if (isAlarm) {
+                notificationBar.style.backgroundColor = '#d9534f';
+                notificationBar.classList.add('alarm-ringing');
+            } else {
+                notificationBar.style.backgroundColor = 'rgba(44, 62, 80, 0.7)';
+                setTimeout(() => {
+                    notificationBar.classList.remove('expanded');
+                    notificationIcon.classList.remove('animate');
+                    setTimeout(() => {
+                        notificationContent.style.display = 'none';
+                    }, 500); // Wait for the transition to finish
+                }, 5000);
+            }
+        }
+        
+        function handleNotificationClick() {
+            const notificationBar = document.getElementById('notification-bar');
+            if (notificationBar.classList.contains('alarm-ringing')) {
+                notificationBar.classList.remove('alarm-ringing');
+                notificationBar.style.backgroundColor = 'rgba(44, 62, 80, 0.7)';
+                const audio = document.getElementById('alarm-sound');
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            } else if (sleepModeActive) {
+                toggleSleepMode();
+            }
+        }
+
+        function changeLanguage(lang) {
+            document.documentElement.lang = lang;
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = translations[lang][key];
+                    } else {
+                        el.innerText = translations[lang][key];
+                    }
+                }
+            });
+            localStorage.setItem('hotos-language', lang);
+        }
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('password-input').value;
+            const storedPassword = localStorage.getItem('hotos-password');
+            const passwordError = document.getElementById('password-error');
+
+            if (enteredPassword === storedPassword) {
+                document.getElementById('password-modal').style.display = 'none';
+                document.getElementById('main-ui').style.display = 'block';
+            } else {
+                passwordError.style.display = 'block';
+                setTimeout(() => passwordError.style.display = 'none', 3000);
+            }
+        }
+
+        function setPassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            if (newPassword) {
+                localStorage.setItem('hotos-password', newPassword);
+                alert(translations[document.documentElement.lang]['password-set-success']);
+                closeApp('settings-app-modal');
+            } else {
+                alert(translations[document.documentElement.lang]['password-set-error']);
+            }
+        }
+        
+        function changeWallpaper(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    document.body.style.backgroundImage = `url('${imageUrl}')`;
+                    localStorage.setItem('hotos-wallpaper', imageUrl);
+                    alert(translations[document.documentElement.lang]['wallpaper-changed-success']);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function loadWallpaper() {
+            const imageUrl = localStorage.getItem('hotos-wallpaper');
+            if (imageUrl) {
+                document.body.style.backgroundImage = `url('${imageUrl}')`;
+            }
+        }
+
+        function setAlarm() {
+            const alarmTime = document.getElementById('alarm-time').value;
+            if (!alarmTime) {
+                alert('الرجاء تحديد وقت للمنبه.');
+                return;
+            }
+            
+            localStorage.setItem('hotos-alarm', alarmTime);
+            showNotification('الإعدادات', translations[document.documentElement.lang]['alarm-set-success']);
+        }
+        
+        function checkAlarms() {
+            const alarmTime = localStorage.getItem('hotos-alarm');
+            if (!alarmTime) return;
+            
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const currentTime = `${hours}:${minutes}`;
+
+            if (currentTime === alarmTime && now.getSeconds() === 0) {
+                ringAlarm();
+            }
+        }
+
+        function ringAlarm() {
+            showNotification('المنبه', translations[document.documentElement.lang]['alarm-ring'], true);
+            const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+            audio.id = 'alarm-sound';
+            audio.volume = 1.0;
+            audio.loop = true;
+            audio.play();
+            
+            localStorage.removeItem('hotos-alarm');
+        }
+
+        function openCreator() {
+            creatorModal.style.display = 'flex';
+            creatorSelection.style.display = 'block';
+            normalAppCreator.style.display = 'none';
+            systemAppCreator.style.display = 'none';
+        }
+
+        function closeCreator() {
+            creatorModal.style.display = 'none';
+        }
+
+        function showNormalAppCreator() {
+            creatorSelection.style.display = 'none';
+            normalAppCreator.style.display = 'block';
+        }
+
+        function showSystemAppCreator() {
+            creatorSelection.style.display = 'none';
+            systemAppCreator.style.display = 'block';
+        }
+        
+        function showCreateAppFolderModal() {
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const appSelectionList = document.getElementById('app-selection-list');
+            appSelectionList.innerHTML = '';
+            apps.forEach(app => {
+                const appItem = document.createElement('div');
+                appItem.innerHTML = `<input type="checkbox" id="app-${app.id}" value="${app.id}"> <label for="app-${app.id}">${app.name}</label>`;
+                appSelectionList.appendChild(appItem);
+            });
+            creatorSelection.style.display = 'none';
+            createAppFolderModal.style.display = 'flex';
+        }
+        
+        function createAppFolder() {
+            const folderName = document.getElementById('new-app-folder-name').value;
+            if (!folderName) {
+                alert('الرجاء إدخال اسم المجلد.');
+                return;
+            }
+            
+            const selectedApps = Array.from(document.querySelectorAll('#app-selection-list input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+            
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const folderAppsData = apps.filter(app => selectedApps.includes(app.id));
+
+            // Create a folder object
+            const folderData = {
+                id: 'folder-' + Date.now(),
+                type: 'app-folder',
+                name: folderName,
+                apps: folderAppsData.map(app => app.id)
+            };
+            
+            // Hide the apps that are now in the folder
+            folderAppsData.forEach(app => {
+                const appIcon = document.getElementById(app.id + '-icon');
+                if (appIcon) appIcon.style.display = 'none';
+            });
+            
+            saveFolderToLocalStorage(folderData);
+            renderFolderIcon(folderData);
+            
+            showNotification('HOTOS', translations[document.documentElement.lang]['app-folder-created']);
+            closeCreator();
+            createAppFolderModal.style.display = 'none';
+        }
+        
+        function showCreateFileManagerFolderModal() {
+            const files = JSON.parse(localStorage.getItem('dina-files')) || [];
+            const fileSelectionList = document.getElementById('file-selection-list');
+            fileSelectionList.innerHTML = '';
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.innerHTML = `<input type="checkbox" id="file-${file.name}" value="${file.name}"> <label for="file-${file.name}">${file.name}</label>`;
+                fileSelectionList.appendChild(fileItem);
+            });
+            creatorSelection.style.display = 'none';
+            createFileFolderModal.style.display = 'flex';
+        }
+        
+        function createFileManagerFolder() {
+            const folderName = document.getElementById('new-file-folder-name').value;
+            if (!folderName) {
+                alert('الرجاء إدخال اسم المجلد.');
+                return;
+            }
+            
+            const selectedFiles = Array.from(document.querySelectorAll('#file-selection-list input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+            
+            const files = JSON.parse(localStorage.getItem('dina-files')) || [];
+            const folderFilesData = files.filter(file => selectedFiles.includes(file.name));
+
+            // Create a folder object for File Manager
+            const folderData = {
+                id: 'file-folder-' + Date.now(),
+                type: 'file-folder',
+                name: folderName,
+                files: folderFilesData.map(file => file.name)
+            };
+            
+            // Save folder to local storage
+            let fileSystem = JSON.parse(localStorage.getItem('dina-file-system')) || [];
+            fileSystem.push(folderData);
+            localStorage.setItem('dina-file-system', JSON.stringify(fileSystem));
+            
+            showNotification('Dina File Manager', translations[document.documentElement.lang]['file-folder-created']);
+            closeCreator();
+            createFileFolderModal.style.display = 'none';
+            renderFiles();
+        }
+
+        function openSettingsApp() {
+            openApp('settings-app-modal');
+        }
+
+        function openBrowser() {
+            openApp('browser-modal');
+        }
+
+        function openHotNot() {
+            openApp('hot-not-modal');
+        }
+        
+        function openFileManager() {
+            openApp('dina-file-manager-modal');
+            renderFiles();
+        }
+
+        async function importFile() {
+            const fileInput = document.getElementById('imported-file-input');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('الرجاء اختيار ملف.');
+                return;
+            }
+
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    let content = e.target.result;
+                    const fileName = file.name;
+
+                    const files = JSON.parse(localStorage.getItem('dina-files')) || [];
+                    files.push({ name: fileName, content: content });
+                    localStorage.setItem('dina-files', JSON.stringify(files));
+
+                    showNotification('Dina File Manager', translations[document.documentElement.lang]['file-imported-success']);
+                    importFileModal.style.display = 'none';
+                    renderFiles();
+                };
+                
+                reader.readAsDataURL(file); // Read as Data URL to support images
+            } catch (error) {
+                console.error("Error importing file:", error);
+                alert(translations[document.documentElement.lang]['file-import-error']);
+            }
+        }
+        
+        function renderFiles() {
+            const files = JSON.parse(localStorage.getItem('dina-files')) || [];
+            const folders = JSON.parse(localStorage.getItem('dina-file-system')) || [];
+            fileListContainer.innerHTML = '';
+            
+            if (files.length === 0 && folders.length === 0) {
+                fileListContainer.innerHTML = '<p style="text-align: center;">لا يوجد ملفات أو مجلدات حاليًا.</p>';
+                return;
+            }
+
+            // Render folders first
+            folders.forEach(folder => {
+                const folderItem = document.createElement('div');
+                folderItem.className = 'folder-item file-item';
+                folderItem.innerHTML = `<span class="file-item-icon">📁</span><span class="file-item-name">${folder.name}</span>`;
+                folderItem.onclick = () => {
+                    // This is where you would open the folder content
+                    alert(`محتوى المجلد: ${folder.files.join(', ')}`);
+                };
+                fileListContainer.appendChild(folderItem);
+            });
+
+            // Then render individual files
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                let icon = '';
+                if (file.name.endsWith('.txt')) {
+                    icon = '📝';
+                } else if (file.name.endsWith('.html') || file.name.endsWith('.js')) {
+                    icon = '💻';
+                } else if (file.name.endsWith('.zip')) {
+                    icon = '📦';
+                } else if (file.name.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                    icon = '🖼️';
+                } else {
+                    icon = '📄';
+                }
+
+                fileItem.innerHTML = `<span class="file-item-icon">${icon}</span><span class="file-item-name">${file.name}</span>`;
+                fileItem.onclick = () => openFileContent(file);
+                
+                fileListContainer.appendChild(fileItem);
+            });
+        }
+        
+        function openFileContent(file) {
+            const contentDisplay = document.getElementById('file-content-display');
+            const fileContentTitle = document.getElementById('file-content-title');
+            
+            fileContentTitle.innerText = file.name;
+            contentDisplay.innerHTML = '';
+            
+            if (file.content.startsWith('data:image')) {
+                const img = document.createElement('img');
+                img.src = file.content;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                contentDisplay.appendChild(img);
+            } else {
+                const pre = document.createElement('pre');
+                pre.innerText = file.content;
+                contentDisplay.appendChild(pre);
+            }
+            
+            openApp('file-content-modal');
+        }
+
+        function navigateBrowser() {
+            const urlInput = document.getElementById('browser-url-input');
+            let url = urlInput.value;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            document.getElementById('browser-frame').src = url;
+        }
+        
+        async function createApp() {
+            const appName = document.getElementById('appName').value;
+            const appIconFile = document.getElementById('appIconFile').files[0];
+            const appCodeFile = document.getElementById('appCodeFile').files[0];
+
+            if (!appName || !appIconFile || !appCodeFile) {
+                alert(translations[document.documentElement.lang]['fill-all-fields']);
+                return;
+            }
+
+            try {
+                const iconDataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(appIconFile);
+                });
+
+                const appCode = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsText(appCodeFile);
+                });
+                
+                const newAppId = 'app-' + Date.now();
+                
+                const appData = {
+                    id: newAppId,
+                    name: appName,
+                    icon: iconDataUrl,
+                    code: appCode
+                };
+                
+                saveAppToLocalStorage(appData);
+                renderAppIcon(appData);
+
+                alert(translations[document.documentElement.lang]['app-created-success'].replace('{appName}', appName));
+                showNotification(appName, 'تم تثبيت التطبيق بنجاح.');
+                closeCreator();
+            } catch (error) {
+                console.error("خطأ في إنشاء التطبيق:", error);
+                alert(translations[document.documentElement.lang]['error-creating-app']);
+            }
+        }
+
+        function createSystemApp() {
+            const systemAppCode = document.getElementById('systemAppCode').value;
+            alert('تم إنشاء تطبيق نظامي! يمكنك الآن دمجه في نظامك.');
+            showNotification('HOTOS', 'تم إنشاء تطبيق نظامي جديد.');
+            closeCreator();
+        }
+
+        function renderAppIcon(appData) {
+            const newIcon = document.createElement('div');
+            newIcon.id = appData.id + '-icon';
+            newIcon.className = 'app-icon';
+            newIcon.dataset.appName = appData.name;
+            newIcon.addEventListener('click', (event) => handleClick(event, appData.id));
+            
+            // Add long-press listeners for mobile and desktop
+            newIcon.addEventListener('touchstart', (event) => startLongPress(event, appData.id), {passive: true});
+            newIcon.addEventListener('touchend', endLongPress);
+            newIcon.addEventListener('mousedown', (event) => startLongPress(event, appData.id));
+            newIcon.addEventListener('mouseup', endLongPress);
+
+            const iconImage = document.createElement('img');
+            iconImage.src = appData.icon;
+            newIcon.appendChild(iconImage);
+            
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'app-icon-label';
+            iconLabel.innerText = appData.name;
+            newIcon.appendChild(iconLabel);
+            
+            appIconsContainer.appendChild(newIcon);
+
+            const newAppWindow = document.createElement('div');
+            newAppWindow.id = appData.id;
+            newAppWindow.className = 'modal';
+            newAppWindow.innerHTML = `
+                <div class="modal-header">
+                    <h2>${appData.name}</h2>
+                    <span class="modal-close" onclick="closeApp('${appData.id}')">&times;</span>
+                </div>
+                <div class="modal-content">
+                    <div class="app-content-area">
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(newAppWindow);
+
+            const blob = new Blob([appData.code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+
+            const iframe = document.createElement('iframe');
+            iframe.id = `iframe-${appData.id}`;
+            iframe.src = url;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+
+            const appContentArea = newAppWindow.querySelector('.app-content-area');
+            appContentArea.appendChild(iframe);
+
+            // Make the new modal draggable
+            const header = newAppWindow.querySelector('.modal-header');
+            if (header) {
+                header.addEventListener('mousedown', startDrag);
+                newAppWindow.addEventListener('mousedown', bringToFront);
+            }
+        }
+        
+        function renderFolderIcon(folderData) {
+            const newIcon = document.createElement('div');
+            newIcon.id = folderData.id + '-icon';
+            newIcon.className = 'app-icon folder-icon';
+            newIcon.dataset.appName = folderData.name;
+            newIcon.addEventListener('click', () => openFolder(folderData));
+            
+            // Render app icons inside the folder icon
+            const folderContent = document.createElement('div');
+            folderContent.className = 'folder-content';
+            
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const folderApps = apps.filter(app => folderData.apps.includes(app.id));
+            
+            folderApps.slice(0, 4).forEach(app => { // Show up to 4 icons
+                const iconImage = document.createElement('img');
+                iconImage.src = app.icon;
+                folderContent.appendChild(iconImage);
+            });
+            
+            newIcon.appendChild(folderContent);
+            
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'app-icon-label';
+            iconLabel.innerText = folderData.name;
+            newIcon.appendChild(iconLabel);
+            
+            appIconsContainer.appendChild(newIcon);
+        }
+        
+        function openFolder(folderData) {
+            // Create a modal for the folder content
+            const folderModal = document.createElement('div');
+            folderModal.id = folderData.id;
+            folderModal.className = 'modal';
+            folderModal.innerHTML = `
+                <div class="modal-header">
+                    <h2>${folderData.name}</h2>
+                    <span class="modal-close" onclick="closeApp('${folderData.id}')">&times;</span>
+                </div>
+                <div class="modal-content">
+                    <div class="app-icons-container" style="display: flex; flex-wrap: wrap; justify-content: start; gap: 15px; padding: 10px;">
+                        </div>
+                </div>
+            `;
+            document.body.appendChild(folderModal);
+            
+            const folderAppContainer = folderModal.querySelector('.app-icons-container');
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const folderApps = apps.filter(app => folderData.apps.includes(app.id));
+            
+            folderApps.forEach(app => {
+                const appIcon = document.createElement('div');
+                appIcon.className = 'app-icon';
+                appIcon.dataset.appName = app.name;
+                appIcon.style.margin = '0';
+                appIcon.addEventListener('click', () => openApp(app.id));
+
+                const iconImage = document.createElement('img');
+                iconImage.src = app.icon;
+                appIcon.appendChild(iconImage);
+
+                const iconLabel = document.createElement('div');
+                iconLabel.className = 'app-icon-label';
+                iconLabel.innerText = app.name;
+                appIcon.appendChild(iconLabel);
+
+                folderAppContainer.appendChild(appIcon);
+            });
+            
+            openApp(folderData.id);
+        }
+
+        function renderEmoAssistantIcon() {
+            const emoAppId = 'emo-assistant-modal';
+            const existingIcon = document.getElementById(emoAppId + '-icon');
+            if (existingIcon) return;
+
+            const newIcon = document.createElement('div');
+            newIcon.id = emoAppId + '-icon';
+            newIcon.className = 'app-icon';
+            newIcon.dataset.appName = 'Emo Assistant';
+            newIcon.addEventListener('click', (event) => openApp(emoAppId));
+            
+            newIcon.addEventListener('touchstart', (event) => startLongPress(event, emoAppId), {passive: true});
+            newIcon.addEventListener('touchend', endLongPress);
+            newIcon.addEventListener('mousedown', (event) => startLongPress(event, emoAppId));
+            newIcon.addEventListener('mouseup', endLongPress);
+
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'app-icon-label';
+            iconLabel.innerText = 'Emo Assistant';
+            newIcon.appendChild(iconLabel);
+
+            const emoIcon = document.createElement('span');
+            emoIcon.style.fontSize = '3rem';
+            emoIcon.style.lineHeight = '80px';
+            emoIcon.innerText = '^';
+            newIcon.appendChild(emoIcon);
+
+            appIconsContainer.appendChild(newIcon);
+        }
+
+        function renderBrowserIcon() {
+            const browserAppId = 'browser-modal';
+            const existingIcon = document.getElementById(browserAppId + '-icon');
+            if (existingIcon) return;
+
+            const newIcon = document.createElement('div');
+            newIcon.id = browserAppId + '-icon';
+            newIcon.className = 'app-icon';
+            newIcon.dataset.appName = 'Browser';
+            newIcon.addEventListener('click', (event) => openApp(browserAppId));
+            
+            newIcon.addEventListener('touchstart', (event) => startLongPress(event, browserAppId), {passive: true});
+            newIcon.addEventListener('touchend', endLongPress);
+            newIcon.addEventListener('mousedown', (event) => startLongPress(event, browserAppId));
+            newIcon.addEventListener('mouseup', endLongPress);
+
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'app-icon-label';
+            iconLabel.innerText = 'Browser';
+            newIcon.appendChild(iconLabel);
+
+            const browserIcon = document.createElement('span');
+            browserIcon.style.fontSize = '3rem';
+            browserIcon.style.lineHeight = '80px';
+            browserIcon.innerText = '🌐';
+            newIcon.appendChild(browserIcon);
+
+            appIconsContainer.appendChild(newIcon);
+        }
+        
+        function renderFileManagerIcon() {
+            const fileManagerAppId = 'dina-file-manager-modal';
+            const existingIcon = document.getElementById(fileManagerAppId + '-icon');
+            if (existingIcon) return;
+
+            const newIcon = document.createElement('div');
+            newIcon.id = fileManagerAppId + '-icon';
+            newIcon.className = 'app-icon';
+            newIcon.style.backgroundColor = '#f0d25c';
+            newIcon.dataset.appName = 'Dina File Manager';
+            newIcon.addEventListener('click', (event) => openFileManager());
+
+            newIcon.addEventListener('touchstart', (event) => startLongPress(event, fileManagerAppId), {passive: true});
+            newIcon.addEventListener('touchend', endLongPress);
+            newIcon.addEventListener('mousedown', (event) => startLongPress(event, fileManagerAppId));
+            newIcon.addEventListener('mouseup', endLongPress);
+            
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'app-icon-label';
+            iconLabel.innerText = 'Dina File Manager';
+            newIcon.appendChild(iconLabel);
+            
+            const fileManagerIcon = document.createElement('span');
+            fileManagerIcon.style.fontSize = '3rem';
+            fileManagerIcon.style.lineHeight = '80px';
+            fileManagerIcon.innerText = '■□';
+            newIcon.appendChild(fileManagerIcon);
+
+            appIconsContainer.appendChild(newIcon);
+        }
+        
+        function renderHotNotIcon() {
+            const hotNotAppId = 'hot-not-modal';
+            const existingIcon = document.getElementById(hotNotAppId + '-icon');
+            if (existingIcon) return;
+
+            const newIcon = document.createElement('div');
+            newIcon.id = hotNotAppId + '-icon';
+            newIcon.className = 'app-icon';
+            newIcon.style.backgroundColor = '#f44336';
+            newIcon.dataset.appName = 'HOT NOT';
+            newIcon.addEventListener('click', (event) => openHotNot());
+            
+            newIcon.addEventListener('touchstart', (event) => startLongPress(event, hotNotAppId), {passive: true});
+            newIcon.addEventListener('touchend', endLongPress);
+            newIcon.addEventListener('mousedown', (event) => startLongPress(event, hotNotAppId));
+            newIcon.addEventListener('mouseup', endLongPress);
+            
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'app-icon-label';
+            iconLabel.innerText = 'HOT NOT';
+            newIcon.appendChild(iconLabel);
+            
+            const hotNotIcon = document.createElement('span');
+            hotNotIcon.style.fontSize = '3rem';
+            hotNotIcon.style.lineHeight = '80px';
+            hotNotIcon.innerText = '|□';
+            hotNotIcon.style.color = 'white';
+            newIcon.appendChild(hotNotIcon);
+
+            appIconsContainer.appendChild(newIcon);
+        }
+        
+        // System Apps functions
+        const systemApps = {
+            'for-memory-modal': {
+                name: 'For Memory',
+                open: () => {
+                    showNotification('For Memory', translations[document.documentElement.lang]['for-memory-clean-success']);
+                    stopAllApps();
+                }
+            },
+            'background-process-killer-modal': {
+                name: 'Process Killer',
+                open: () => {
+                    backgroundProcessList.innerHTML = '';
+                    for (const appId in activeApps) {
+                        const appName = activeApps[appId];
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <span>${appName}</span>
+                            <button class="modal-button" onclick="closeApp('${appId}'); closeApp('background-process-killer-modal');" data-i18n="stop-button">إيقاف</button>
+                        `;
+                        backgroundProcessList.appendChild(listItem);
+                    }
+                    openApp('background-process-killer-modal');
+                }
+            }
+        };
+
+        function saveAppToLocalStorage(appData) {
+            let apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            
+            apps.push(appData);
+            localStorage.setItem('hotos-apps', JSON.stringify(apps));
+        }
+        
+        function saveFolderToLocalStorage(folderData) {
+            let folders = JSON.parse(localStorage.getItem('hotos-folders')) || [];
+            folders.push(folderData);
+            localStorage.setItem('hotos-folders', JSON.stringify(folders));
+        }
+
+        function loadAppsFromLocalStorage() {
+            let apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            
+            apps.forEach(appData => {
+                renderAppIcon(appData);
+            });
+        }
+        
+        function loadFoldersFromLocalStorage() {
+            let apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            let folders = JSON.parse(localStorage.getItem('hotos-folders')) || [];
+            
+            const appsInFolders = folders.flatMap(f => f.apps);
+            apps.forEach(app => {
+                if (appsInFolders.includes(app.id)) {
+                    const appIcon = document.getElementById(app.id + '-icon');
+                    if (appIcon) appIcon.style.display = 'none';
+                }
+            });
+            
+            folders.forEach(folderData => {
+                renderFolderIcon(folderData);
+            });
+        }
+        
+        function handleClick(event, appId) {
+            if (longPressTimeout === null) {
+                openApp(appId);
+            }
+        }
+        
+        function startLongPress(event, appId) {
+            event.preventDefault();
+            clearTimeout(longPressTimeout);
+            
+            longPressTimeout = setTimeout(() => {
+                confirmAndDeleteApp(appId);
+                longPressTimeout = null;
+            }, 1000);
+        }
+        
+        function endLongPress() {
+            clearTimeout(longPressTimeout);
+            longPressTimeout = null;
+        }
+
+        function openApp(appId) {
+            const appWindow = document.getElementById(appId);
+            if (appWindow) {
+                appWindow.style.display = 'flex';
+                bringToFront({target: appWindow});
+                
+                let appName = 'غير معروف';
+                const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+                const folders = JSON.parse(localStorage.getItem('hotos-folders')) || [];
+                const appData = apps.find(app => app.id === appId) || folders.find(folder => folder.id === appId);
+                if (appData) {
+                    appName = appData.name;
+                } else if (appId === 'emo-assistant-modal') {
+                    appName = 'Emo Assistant';
+                } else if (appId === 'browser-modal') {
+                    appName = 'Browser';
+                } else if (appId === 'dina-file-manager-modal') {
+                    appName = 'Dina File Manager';
+                } else if (appId === 'hot-not-modal') {
+                    appName = 'HOT NOT';
+                } else if (appId === 'for-memory-modal') {
+                    appName = 'For Memory';
+                } else if (appId === 'background-process-killer-modal') {
+                    appName = 'Process Killer';
+                } else if (appId === 'settings-app-modal') {
+                    appName = 'Settings';
+                }
+
+
+                activeApps[appId] = appName;
+                updateBackgroundAppsList();
+            }
+        }
+
+        function closeApp(appId) {
+            const appWindow = document.getElementById(appId);
+            if (appWindow) {
+                appWindow.style.display = 'none';
+                delete activeApps[appId];
+                updateBackgroundAppsList();
+            }
+        }
+
+        function copyAppCode(appId) {
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const appData = apps.find(app => app.id === appId);
+
+            if (appData) {
+                navigator.clipboard.writeText(appData.code).then(() => {
+                    alert(translations[document.documentElement.lang]['code-copied']);
+                }).catch(err => {
+                    console.error('فشل نسخ الكود:', err);
+                    alert(translations[document.documentElement.lang]['copy-failed']);
+                });
+            }
+        }
+
+        function confirmAndDeleteApp(appId) {
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const folders = JSON.parse(localStorage.getItem('hotos-folders')) || [];
+            const appData = apps.find(app => app.id === appId) || folders.find(folder => folder.id === appId);
+            
+            let appName = 'التطبيق';
+            if (appData) {
+                appName = appData.name;
+            } else if (['emo-assistant-modal', 'browser-modal', 'settings-app-modal', 'creator-modal', 'background-apps-modal', 'emergency-app-modal', 'dina-file-manager-modal', 'hot-not-modal', 'for-memory-modal', 'background-process-killer-modal', 'file-content-modal', 'import-file-modal'].includes(appId)) {
+                alert(translations[document.documentElement.lang]['unsupported-app-delete']);
+                return;
+            }
+            
+            const confirmed = confirm(translations[document.documentElement.lang]['app-delete-confirm'].replace('{appName}', appName));
+            if (confirmed) {
+                deleteApp(appId);
+            }
+        }
+        
+        function deleteApp(appId) {
+            let apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            let folders = JSON.parse(localStorage.getItem('hotos-folders')) || [];
+            
+            if (appId.startsWith('folder')) {
+                // It's a folder, delete it and restore the apps inside
+                const folder = folders.find(f => f.id === appId);
+                if (folder) {
+                    folder.apps.forEach(appIdInFolder => {
+                        const appIcon = document.getElementById(appIdInFolder + '-icon');
+                        if (appIcon) appIcon.style.display = 'flex';
+                    });
+                    folders = folders.filter(f => f.id !== appId);
+                    localStorage.setItem('hotos-folders', JSON.stringify(folders));
+                }
+            } else {
+                // It's a regular app
+                apps = apps.filter(app => app.id !== appId);
+                localStorage.setItem('hotos-apps', JSON.stringify(apps));
+            }
+
+            const appIcon = document.getElementById(appId + '-icon');
+            if (appIcon) appIcon.remove();
+            
+            const appWindow = document.getElementById(appId);
+            if (appWindow) appWindow.remove();
+            
+            delete activeApps[appId];
+            updateBackgroundAppsList();
+
+            alert(translations[document.documentElement.lang]['app-deleted']);
+        }
+
+        function openBackgroundAppsList() {
+            openApp('background-apps-modal');
+            updateBackgroundAppsList();
+        }
+
+        function updateBackgroundAppsList() {
+            backgroundAppsList.innerHTML = '';
+            for (const appId in activeApps) {
+                const appName = activeApps[appId];
+                if (appName) {
+                     const listItem = document.createElement('li');
+                     listItem.innerHTML = `
+                         <span>${appName}</span>
+                         <button class="modal-button" onclick="closeApp('${appId}')" data-i18n="stop-button">إيقاف</button>
+                     `;
+                     backgroundAppsList.appendChild(listItem);
+                }
+            }
+        }
+
+        function openForMemoryApp() {
+             showNotification('For Memory', translations[document.documentElement.lang]['for-memory-clean-success']);
+             stopAllApps();
+        }
+
+        function stopAllApps() {
+            for (const appId in activeApps) {
+                if (['emo-assistant-modal', 'browser-modal', 'dina-file-manager-modal', 'hot-not-modal', 'settings-app-modal'].includes(appId)) {
+                    // Don't kill essential apps
+                    continue;
+                }
+                closeApp(appId);
+            }
+        }
+
+        function openBackgroundProcessKiller() {
+             const app = systemApps['background-process-killer-modal'];
+             if (app) {
+                app.open();
+             }
+        }
+
+        function toggleSleepMode() {
+            sleepModeActive = !sleepModeActive;
+            const body = document.body;
+            
+            if (sleepModeActive) {
+                body.classList.add('sleep-mode');
+                showNotification('وضع السكون', translations[document.documentElement.lang]['sleep-mode-on']);
+            } else {
+                body.classList.remove('sleep-mode');
+                showNotification('وضع السكون', translations[document.documentElement.lang]['sleep-mode-off']);
+            }
+        }
+
+        function filterApps(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            const allAppIcons = document.querySelectorAll('#app-icons-container .app-icon');
+            const allFolderIcons = document.querySelectorAll('#app-icons-container .folder-icon');
+            
+            allAppIcons.forEach(icon => {
+                const appName = icon.dataset.appName.toLowerCase();
+                if (appName.includes(searchTerm)) {
+                    icon.style.display = 'flex';
+                } else {
+                    icon.style.display = 'none';
+                }
+            });
+            
+            allFolderIcons.forEach(icon => {
+                const appName = icon.dataset.appName.toLowerCase();
+                if (appName.includes(searchTerm)) {
+                    icon.style.display = 'flex';
+                } else {
+                    icon.style.display = 'none';
+                }
+            });
+        }
+        
+        function toggleEmergencyMode() {
+            emergencyModeActive = !emergencyModeActive;
+            const allIcons = document.querySelectorAll('.app-icon');
+            if (emergencyModeActive) {
+                allIcons.forEach(icon => {
+                    if (icon.id !== 'add-app-icon' && icon.id !== 'emergency-app-icon' && icon.id !== 'background-apps-icon' && icon.id !== 'settings-app-icon' && icon.id !== 'emo-shortcut-icon' && icon.id !== 'background-process-killer-icon' && icon.id !== 'sleep-mode-icon') {
+                        icon.style.display = 'none';
+                    }
+                });
+                alert(translations[document.documentElement.lang]['emergency-on']);
+                showNotification('الطوارئ', 'تم تفعيل وضع الطوارئ');
+            } else {
+                allIcons.forEach(icon => {
+                    if (icon.id !== 'add-app-icon' && icon.id !== 'emergency-app-icon' && icon.id !== 'background-apps-icon' && icon.id !== 'settings-app-icon' && icon.id !== 'emo-shortcut-icon' && icon.id !== 'background-process-killer-icon' && icon.id !== 'sleep-mode-icon') {
+                        icon.style.display = 'flex';
+                    }
+                });
+                alert(translations[document.documentElement.lang]['emergency-off']);
+                showNotification('الطوارئ', 'تم إلغاء وضع الطوارئ');
+            }
+        }
+
+        function activateEmoShortcut() {
+            openApp('emo-assistant-modal');
+            addMessageToEmoChat('user', 'Hey Emo');
+            handleEmoCommand('Hey Emo');
+        }
+
+        function addMessageToEmoChat(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', sender === 'user' ? 'user-message' : 'emo-message');
+            messageDiv.innerText = text;
+            emoChatArea.appendChild(messageDiv);
+            emoChatArea.scrollTop = emoChatArea.scrollHeight;
+        }
+
+        function sendEmoMessage() {
+            const inputElement = document.getElementById('emo-input');
+            const message = inputElement.value.trim();
+            if (message === '') return;
+
+            addMessageToEmoChat('user', message);
+            handleEmoCommand(message);
+            inputElement.value = '';
+        }
+
+        function handleEmoCommand(text) {
+            const currentLang = document.documentElement.lang;
+            let response = translations[currentLang]['emo-not-understand'];
+
+            const apps = JSON.parse(localStorage.getItem('hotos-apps')) || [];
+            const folders = JSON.parse(localStorage.getItem('hotos-folders')) || [];
+            const allAppsAndFolders = apps.concat(folders).concat([
+                { name: 'Browser', id: 'browser-modal' },
+                { name: 'Emo Assistant', id: 'emo-assistant-modal' },
+                { name: 'Dina File Manager', id: 'dina-file-manager-modal' },
+                { name: 'HOT NOT', id: 'hot-not-modal' },
+                { name: 'For Memory', id: 'for-memory-modal' }
+            ]);
+
+            const foundItem = textAnalyzer.findAppName(text, allAppsAndFolders);
+
+            if (foundItem) {
+                if (foundItem.type === 'app-folder') {
+                    openFolder(foundItem);
+                } else {
+                    openApp(foundItem.id);
+                }
+                response = translations[currentLang]['app-open-success'].replace('{appName}', foundItem.name);
+                showNotification('Emo', `تم فتح تطبيق ${foundItem.name}`);
+            } else if (textAnalyzer.hasKeyword(text, 'hey emo') || textAnalyzer.hasKeyword(text, 'اهلا')) {
+                response = translations[currentLang]['emo-welcome-back'];
+            }
+            
+            addMessageToEmoChat('emo', response);
+        }
+
+        // Hot Not App Functions
+        let isDrawing = false;
+        let canvas = null;
+        let ctx = null;
+
+        function initializeCanvas() {
+            canvas = document.getElementById('drawing-canvas');
+            if (canvas) {
+                ctx = canvas.getContext('2d');
+                canvas.width = canvas.parentElement.offsetWidth;
+                canvas.height = canvas.parentElement.offsetHeight;
+
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mousemove', draw);
+            }
+        }
+        
+        function toggleDrawingMode() {
+            const notesArea = document.getElementById('hot-not-notes');
+            const canvasContainer = document.getElementById('hot-not-canvas-container');
+            if (notesArea.style.display === 'none') {
+                notesArea.style.display = 'block';
+                canvasContainer.style.display = 'none';
+            } else {
+                notesArea.style.display = 'none';
+                canvasContainer.style.display = 'flex';
+            }
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            draw(e);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.closePath();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#f44336';
+
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+        
+        function saveHotNot() {
+            const notesText = document.getElementById('hot-not-notes').value;
+            const drawingData = canvas.toDataURL();
+            
+            const notes = JSON.parse(localStorage.getItem('hot-not-notes')) || [];
+            notes.push({ text: notesText, drawing: drawingData, timestamp: Date.now() });
+            localStorage.setItem('hot-not-notes', JSON.stringify(notes));
+            
+            showNotification('HOT NOT', 'تم حفظ الملاحظة!');
+            document.getElementById('hot-not-notes').value = '';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+
+        // Draggable window functions
+        function startDrag(e) {
+            isDragging = true;
+            activeModal = e.target.closest('.modal');
+            offsetX = e.clientX - activeModal.offsetLeft;
+            offsetY = e.clientY - activeModal.offsetTop;
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            const x = e.clientX - offsetX;
+            const y = e.clientY - offsetY;
+
+            activeModal.style.left = `${x}px`;
+            activeModal.style.top = `${y}px`;
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        function bringToFront(e) {
+            let modal = e.target.closest('.modal');
+            if (modal) {
+                zIndexCounter++;
+                modal.style.zIndex = zIndexCounter;
+            }
+        }
+    </script>
+</body>
+</html>
